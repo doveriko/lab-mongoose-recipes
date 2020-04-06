@@ -1,76 +1,84 @@
-const mongoose = require('mongoose');
-const Recipe = require('./models/Recipe.model'); // Import of the model Recipe from './models/Recipe.model.js'
-const data = require('./data.js'); // Import of the data from './data.js'
+const mongoose = require("mongoose");
 
-// Connection to the database "recipeApp"
+// Allows findOneAndUpdate to work
+mongoose.set("useFindAndModify", false);
+
+// Import of the model Recipe from './models/Recipe.model.js'
+const Recipe = require("./models/Recipe.model");
+// Import of the data from './data.json'
+const data = require("./data");
+
 mongoose
-  .connect('mongodb://localhost/recipe-app-dev', {
+  .connect("mongodb://localhost/lab-mongoose-recipes", {
     useCreateIndex: true,
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
   })
-  .then(x => console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`))
-  .catch(err => console.error('Error connecting to mongo', err));
+  .then((x) =>
+    console.log(`Connected to Mongo! Database name: "${x.connections[0].name}"`)
+  )
+  .catch((err) => console.error("Error connecting to mongo", err));
 
-
-  mongoose.connection.on("disconnected", () =>
+mongoose.connection.on("disconnected", () =>
   console.log("Mongoose disconnected")
 );
 
-let recipe1 = {
-  title: "tortilla",
-  level: "UltraPro Chef",
-  ingredients: "potatoes and eggs",
+// COMMENT OUT ALL THE CODE BELOW TO TEST EVERY ITERATION ONE BY ONE:
+
+// Iteration 2 - Create a recipe
+
+const tortillaPapas = {
+  title: "Tortilla de patatas",
+  level: "Amateur Chef",
   cuisine: "Spanish",
-  dishType: "Dish",
-  image: 'https://images.media-allrecipes.com/userphotos/720x405/815964.jpg',
-  duration: 30,
+  dishType: "main_course",
+  duration: 40,
   creator: "Abel",
-  created: Date.now(),
-}
+};
 
- Recipe.create(recipe1)
- .then((createdRecipe) => {
-   console.log("New recipe created", createdRecipe)
- }).catch((err) => {
- })
- Recipe.insertMany(data)
-   .then(function (result) {
-     result.forEach( function(element) {
-       console.log(element.title)
-     } )
-   })
-   .catch(err => {
-     console.log(err);
-   });
+Recipe.create(tortillaPapas, (err, result) => {
+  if (err) console.log(err);
+  else console.log("Marchando tortilla papas:", result.title);
+});
 
+// // Iteration 3 - Insert multiple recipes
 
+Recipe.insertMany(data, (err, result) => {
+  if (err) console.log(err);
+  else {
+    result.forEach((e) => console.log("Recipes added:", e.title));
+  }
+});
 
- Recipe.findOneAndUpdate({ title: 'Rigatoni alla Genovese' }, { $set: { duration:  100 } })
- .then((result) => {
-   console.log('Duration updated successfuly')
-  
-   mongoose.connection.close()
- })
- .catch(err => console.log(err));
+// Iteration 4 - Update recipe
 
- Recipe.deleteOne({ title:'Carrot Cake'})
-  .then( (result) => console.log('Success deleting recipe'))
-  .catch(err => console.log(err));
+Recipe.findOneAndUpdate(
+  { title: "Rigatoni alla Genovese" },
+  { $set: { duration: 100 } }
+)
+  .then((result) => {
+    console.log("Duration updated successfully", result);
+  })
+  .catch((err) => console.log(err));
 
+// Iteration 5 - Remove a recipe
 
-// const promise1 = Recipe.create(recipe1)
-// const promise2 = Recipe.insertMany(data)
-// const promise3 = Recipe.findOneAndUpdate({ title: 'Rigatoni alla Genovese' }, { $set: { duration:  100 } })
-// const promise4 = Recipe.deleteOne({ title:'Carrot Cake'})
+Recipe.deleteOne({ title: "Carrot Cake" })
+  .then((result) => console.log("Success deleting recipe"))
+  .catch((err) => console.log(err));
 
-/*
- Promise.all( [ promise1, promise2, promise3, promise4 ] )
- .then((arrayOfResovedPromises) => {
-   mongoose.connection.close()
- }).catch((err) => {
-   console.log(err);
- });
-*/
+// Iteration 6 - Close  the Database
 
+const promise1 = Recipe.create(tortillaPapas)
+const promise2 = Recipe.insertMany(data)
+const promise3 = Recipe.findOneAndUpdate({ title: 'Rigatoni alla Genovese' }, { $set: { duration:  100 } })
+const promise4 = Recipe.deleteOne({ title:'Carrot Cake'})
 
+Promise.all([promise1, promise2, promise3, promise4])
+  .then((result) => {
+    console.log("ALL LAB ITERATIONS:", result);
+    mongoose.connection.close();
+  })
+  .catch((err) => {
+    console.log(err);
+  });
